@@ -1,8 +1,21 @@
 package com.github.eikefs.core.api.economy.transaction.event;
 
 import com.github.eikefs.core.api.economy.transaction.Transaction;
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 
-public class TransactionEvent {
+public class TransactionEvent extends Event {
+
+    private static HandlerList handlerList = new HandlerList();
+
+    @Override
+    public HandlerList getHandlers() {
+        return handlerList;
+    }
+
+    public static HandlerList getHandlerList() {
+        return handlerList;
+    }
 
     public enum TransactionState {
 

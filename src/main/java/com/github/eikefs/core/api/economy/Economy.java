@@ -9,11 +9,13 @@ import com.github.eikefs.core.sql.database.Document;
 import com.github.eikefs.core.sql.query.DeleteQuery;
 import com.github.eikefs.core.sql.query.InsertQuery;
 import com.github.eikefs.core.sql.query.SelectQuery;
+import com.github.eikefs.core.sql.query.UpdateQuery;
 import com.github.eikefs.core.sql.table.TableField;
 import com.github.eikefs.core.sql.table.TableFieldConstraint;
 import com.github.eikefs.core.sql.table.TableRepository;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.bukkit.Bukkit;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +27,7 @@ public class Economy extends TransactionController implements TableRepository<Ec
 
     public Economy(DB database) {
         super(database);
+        initialize(database);
 
         this.database = database;
         this.cache = CacheBuilder.newBuilder()
@@ -53,7 +56,7 @@ public class Economy extends TransactionController implements TableRepository<Ec
 
         TransactionEvent event = new TransactionEvent(transaction, state);
 
-        // TODO: Call event
+        Bukkit.getPluginManager().callEvent(event);
     }
 
     public DB getDatabase() {
@@ -91,7 +94,12 @@ public class Economy extends TransactionController implements TableRepository<Ec
 
     @Override
     public void update(Document key, Document document) {
-
+        database.update(
+                new UpdateQuery()
+                .into(tableName())
+                .sets(document.toMap())
+                .where("id", "=", key.getObject("id"))
+        );
     }
 
     @Override
@@ -125,7 +133,5 @@ public class Economy extends TransactionController implements TableRepository<Ec
 
         return player;
     }
-
-
 
 }
