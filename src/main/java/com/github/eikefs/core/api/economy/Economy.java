@@ -1,9 +1,12 @@
 package com.github.eikefs.core.api.economy;
 
 import com.github.eikefs.core.api.economy.transaction.Transaction;
+import com.github.eikefs.core.api.economy.transaction.event.TransactionEvent;
+import com.github.eikefs.core.api.economy.transaction.event.TransactionEvent.TransactionState;
 import com.github.eikefs.core.api.economy.transaction.controller.TransactionController;
 import com.github.eikefs.core.sql.database.DB;
 import com.github.eikefs.core.sql.database.Document;
+import com.github.eikefs.core.sql.query.DeleteQuery;
 import com.github.eikefs.core.sql.query.InsertQuery;
 import com.github.eikefs.core.sql.query.SelectQuery;
 import com.github.eikefs.core.sql.table.TableField;
@@ -20,7 +23,6 @@ public class Economy extends TransactionController implements TableRepository<Ec
     private final DB database;
     private final Cache<UUID, EconomyPlayer> cache;
 
-
     public Economy(DB database) {
         super(database);
 
@@ -32,9 +34,26 @@ public class Economy extends TransactionController implements TableRepository<Ec
 
     @Override
     public void apply(Transaction transaction) {
+        EconomyPlayer author = transaction.getAuthor();
+        EconomyPlayer target = transaction.getTarget();
+        double amount = transaction.getAmount();
         
+        TransactionState state = TransactionState.ACCEPT;
 
-        log(transaction);
+        if (amount > author.getAmount()) state = TransactionState.DENY;
+        else {
+            if (target != null) {
+                target.setAmount(target.getAmount() + amount);
+            }
+
+            author.setAmount(author.getAmount() - amount);
+
+            log(transaction);
+        }
+
+        TransactionEvent event = new TransactionEvent(transaction, state);
+
+        // TODO: Call event
     }
 
     public DB getDatabase() {
@@ -77,7 +96,11 @@ public class Economy extends TransactionController implements TableRepository<Ec
 
     @Override
     public void delete(Document key) {
-
+        database.update(
+                new DeleteQuery()
+                .from(tableName())
+                .where("id", "=", key.getObject("id"))
+        );
     }
 
     @Override

@@ -6,7 +6,11 @@ import com.github.eikefs.core.sql.database.Document;
 public interface TableRepository<T> {
 
     default void initialize(DB database) {
-
+        database.update(
+                new TableQuery()
+                        .createIfNotExists(tableName())
+                        .add(fields())
+        );
     }
 
     String tableName();
